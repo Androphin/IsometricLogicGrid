@@ -101,11 +101,11 @@ public class Init extends ApplicationAdapter {
 			System.out.println(angle);
 			areaRotateXMatrix.setToRotation(new Vector3(1,0,0), angle);
 		}else{
-			AREA_HEIGHT_DIAGONALE = AREA_WIDTH_DIAGONALE/2f;
-			areaRotateXMatrix.setToRotation(new Vector3(1,0,0), -60);
-			float angle = (float)Math.atan( (AREA_HEIGHT_DIAGONALE/2)/(AREA_WIDTH_DIAGONALE/2) );
+			AREA_HEIGHT_DIAGONALE = AREA_WIDTH_DIAGONALE/2;
+			float angle = (float)Math.atan( (AREA_HEIGHT_DIAGONALE)/(AREA_WIDTH_DIAGONALE/2) );
 			angle = (float)Math.toDegrees(angle)*-1;
-			System.out.println(angle);
+			areaRotateXMatrix.setToRotation(new Vector3(1,0,0), -60);
+			//areaRotateXMatrix.setToRotation(new Vector3(1,0,0), angle);
 		}
 
 		//WORLD setup
@@ -117,8 +117,8 @@ public class Init extends ApplicationAdapter {
 		terrain.setSize(AREA_WIDTH, AREA_HEIGHT);
 		terrain.rotate(-45);
 
-		building.setPosition(1*TILE_WIDTH, AREA_HEIGHT_DIAGONALE/2 );
-		building.setSize( 4*TILE_WIDTH,4*TILE_HEIGHT);
+		building.setPosition(13.15f*TILE_WIDTH, 0.2f );
+		building.setSize( 2*TILE_WIDTH,2*TILE_HEIGHT);
 		building.setOrigin(0, 0);
 
 		deviceScreenAspectRatio = (float)Gdx.graphics.getWidth()/(float)Gdx.graphics.getHeight();
