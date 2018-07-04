@@ -41,6 +41,7 @@ public class Init extends ApplicationAdapter {
 	float TILE_WIDTH_DIAGONALE;
 
 	String projectionType;
+	boolean trueIsometric;
 
 	float devicePixelAspectRatio;
 	float deviceScreenAspectRatio;
@@ -58,20 +59,25 @@ public class Init extends ApplicationAdapter {
 	ShapeRenderer sr;
 
 	//matrix to rotate the grid from topdown to iso/dimetric
-	Matrix4 areaRotateXMatrix = new Matrix4();
+	Matrix4 areaRotation = new Matrix4();
 
 	@Override
 	public void create(){
 		screenEmulator = new ScreenEmulator();
 
+		trueIsometric = false;
 		projectionType = "oblique";
 
 		//resolutionFileResolver = new ResolutionFileResolver();
-		terrain = new Sprite(new Texture(Gdx.files.internal("tile_grass.png")));
+		terrain = new Sprite(new Texture(Gdx.files.internal("supertile_grass.png")));
 		if( projectionType == "oblique" ) {
 			building = new Building(new Texture(Gdx.files.internal("box_oblique.png")), 3, 1, 1);
 		}else {
-			building = new Building(new Texture(Gdx.files.internal("box_isometric.png")), 3, 1, 1);
+			if( trueIsometric ){
+				building = new Building(new Texture(Gdx.files.internal("box_trueIsometric.png")), 3, 1, 1);
+			}else{
+				building = new Building(new Texture(Gdx.files.internal("box_isometric.png")), 3, 1, 1);
+			}
 		}
 
 		batch = new SpriteBatch();
@@ -82,8 +88,8 @@ public class Init extends ApplicationAdapter {
 		//TILE setup
 		TILES_X = 20;
 		TILES_Y = 20;
-		TILE_WIDTH  = 10;
-		TILE_HEIGHT = 10;
+		TILE_WIDTH  = 12;
+		TILE_HEIGHT = 12;
 		TILE_WIDTH_DIAGONALE = (float)Math.sqrt( (AREA_WIDTH*AREA_WIDTH)+(AREA_HEIGHT*AREA_HEIGHT) );
 
 		//AREA setup
@@ -91,34 +97,59 @@ public class Init extends ApplicationAdapter {
 		AREA_WIDTH = TILES_X*TILE_WIDTH;
 		AREA_HEIGHT = TILES_Y*TILE_HEIGHT;
 		AREA_WIDTH_DIAGONALE = (float)Math.sqrt( (AREA_WIDTH*AREA_WIDTH)+(AREA_HEIGHT*AREA_HEIGHT) );
+		float angle = 0;
+		float offsetY = 0;
+		//OBLIQUE
 		if( projectionType == "oblique" ) {
 			//AREA_HEIGHT_DIAGONALE = AREA_WIDTH_DIAGONALE/1.4f;
 			AREA_HEIGHT_DIAGONALE = AREA_WIDTH_DIAGONALE/1.33f;
 			//calculate angle for oblique
-			//tan(phi) = (AREA_HEIGHT_DIAGONALE/2)/(AREA_WIDTH_DIAGONALE/2)
-			float angle = (float)Math.atan( (AREA_HEIGHT_DIAGONALE/2)/(AREA_WIDTH_DIAGONALE/2) );
-			angle = (float)Math.toDegrees(angle)*-1;
-			System.out.println(angle);
-			areaRotateXMatrix.setToRotation(new Vector3(1,0,0), angle);
+			angle = (float)Math.atan( (AREA_HEIGHT_DIAGONALE/2)/(AREA_WIDTH_DIAGONALE/2) );
+			angle = (float)Math.toDegrees(angle);
+			angle = (90-angle)*-1;
+			angle = 41.26f*-1;
+			areaRotation.setToRotation(new Vector3(1,0,0), angle);
+			//calculate position Y offset, that happens through rotation
+			//HEIGHT_DIAGONALE minus distance from rotation
+			offsetY = (AREA_HEIGHT_DIAGONALE*(1.33f/2))-AREA_HEIGHT_DIAGONALE;
 		}else{
+		//ISOMETRIC
 			AREA_HEIGHT_DIAGONALE = AREA_WIDTH_DIAGONALE/2;
-			float angle = (float)Math.atan( (AREA_HEIGHT_DIAGONALE)/(AREA_WIDTH_DIAGONALE/2) );
-			angle = (float)Math.toDegrees(angle)*-1;
-			areaRotateXMatrix.setToRotation(new Vector3(1,0,0), -60);
-			//areaRotateXMatrix.setToRotation(new Vector3(1,0,0), angle);
+			if( trueIsometric ){
+				areaRotation.setToRotation(new Vector3(1,0,0), -60);
+			}else{
+				angle = (float)Math.atan( (AREA_HEIGHT_DIAGONALE/2)/(AREA_WIDTH_DIAGONALE/2) );
+				angle = (float)Math.floor( Math.toDegrees(angle) );
+				angle = (90-angle)*-1;
+				angle = 60*-1;
+				areaRotation.setToRotation(new Vector3(1,0,0), angle);
+			}
 		}
+		System.out.println("Area WidthDiag: "+AREA_WIDTH_DIAGONALE+"\n"
+                +"Area HeightDiag: "+AREA_HEIGHT_DIAGONALE+"\n"
+                +"Area WDiag/2: "+AREA_WIDTH_DIAGONALE/2+"\n"
+                +"Area HDiag/2: "+AREA_HEIGHT_DIAGONALE/2+"\n"
+				+"Angle: "+angle+"\n"
+                +"offsetY: "+offsetY+"\n"
+        );
 
 		//WORLD setup
 		WORLD_WIDTH = AREA_WIDTH_DIAGONALE;
 		WORLD_HEIGHT = AREA_HEIGHT_DIAGONALE;
 
 		terrain.setOrigin(0,0);
-		terrain.setPosition(0, AREA_WIDTH_DIAGONALE/2f);
+		terrain.setPosition(0, AREA_HEIGHT_DIAGONALE+offsetY);
 		terrain.setSize(AREA_WIDTH, AREA_HEIGHT);
 		terrain.rotate(-45);
 
-		building.setPosition(13.15f*TILE_WIDTH, 0.2f );
+		if( projectionType == "oblique") {
+			building.setPosition(13.21f * TILE_WIDTH, 0f);
+		}else{
+			building.setPosition(13.14f*TILE_WIDTH, 0f );
+		}
 		building.setSize( 2*TILE_WIDTH,2*TILE_HEIGHT);
+        //building.setPosition(0,0);
+        //building.setSize(AREA_WIDTH_DIAGONALE, AREA_WIDTH_DIAGONALE);
 		building.setOrigin(0, 0);
 
 		deviceScreenAspectRatio = (float)Gdx.graphics.getWidth()/(float)Gdx.graphics.getHeight();
@@ -144,7 +175,7 @@ public class Init extends ApplicationAdapter {
 		Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
 		batchRotated.setProjectionMatrix(cam.combined);
-		batchRotated.setTransformMatrix(areaRotateXMatrix);
+		batchRotated.setTransformMatrix(areaRotation);
 		batchRotated.begin();
 		terrain.draw(batchRotated);
 		batchRotated.end();
@@ -195,7 +226,10 @@ public class Init extends ApplicationAdapter {
 //						"PPC-x: " + Gdx.graphics.getPpcX() + "\n" +
 //						"PPC-y: " + Gdx.graphics.getPpcY() + "\n" +
 //						"PPI-x: " + Gdx.graphics.getPpiX() + "\n" +
-//						"PPI-y: " + Gdx.graphics.getPpiY()
+//						"PPI-x: " + Gdx.graphics.getPpiY() + "\n" +
+//						"FPS: " + Gdx.graphics.getFPS() + "\n" +
+//						"Projection: " + projectionType + "\n" +
+//						""
 //				, 0, viewport.getWorldHeight());
 //		batch.end();
 

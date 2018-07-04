@@ -17,6 +17,7 @@ public class Building {
         this.gridSpace = occupiedGridSpace;
         positionX = posX;
         positionY = posY;
+        imageSprite.setAlpha(0.8f);
     }
 
     public void setSize(float width, float height){
